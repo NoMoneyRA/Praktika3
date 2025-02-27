@@ -62,7 +62,32 @@ new Vue({
             newTask: { title: '', description: '', deadline: '' }
         };
     },
-
+    methods: {
+        saveToLocalStorage() {
+            localStorage.setItem('kanbanColumns', JSON.stringify(this.columns));
+        },
+        addTask() {
+            if (!this.newTask.title || !this.newTask.description || !this.newTask.deadline) return;
+            this.columns[0].tasks.push({
+                ...this.newTask,
+                createdAt: new Date().toLocaleString(),
+                lastEdited: new Date().toLocaleString()
+            });
+            this.newTask = { title: '', description: '', deadline: '' };
+            this.saveToLocalStorage();
+        },
+        deleteTask(task, colIndex) {
+            this.columns[colIndex].tasks = this.columns[colIndex].tasks.filter(t => t !== task);
+            this.saveToLocalStorage();
+        },
+        moveTask(task, fromColumn, toColumn) {
+            if (toColumn >= this.columns.length) return;
+            this.columns[fromColumn].tasks = this.columns[fromColumn].tasks.filter(t => t !== task);
+            this.columns[toColumn].tasks.push(task);
+            task.lastEdited = new Date().toLocaleString();
+            this.saveToLocalStorage();
+        }
+    },
     template: `
     <div>
         <div class="task-form">
