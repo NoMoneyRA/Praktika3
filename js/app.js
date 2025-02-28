@@ -18,9 +18,59 @@ Vue.component('task-card', {
         }
     },
     methods: {
-
+        toggleEdit() {
+            if (!this.isEditing) {
+                this.editedTask = { ...this.task };
+            }
+            this.isEditing = !this.isEditing;
+        },
+        saveEdit() {
+            this.task.title = this.editedTask.title;
+            this.task.description = this.editedTask.description;
+            this.task.deadline = this.editedTask.deadline;
+            this.task.lastEdited = new Date().toLocaleString();
+            this.isEditing = false;
+            this.$emit('update-storage');
+        },
+        returnTask() {
+            if (!this.returnReason.trim()) {
+                alert('Укажите причину возврата');
+                return;
+            }
+            this.task.returnReason = this.returnReason;
+            this.$emit('return-task', this.task, this.colIndex, this.returnReason);
+            this.returnReason = '';
+        }
     },
-
+    template: `
+    <div class="task" :class="taskStatus">
+        <div>
+            <input v-if="isEditing" v-model="editedTask.title" placeholder="Название">
+            <p v-else>{{ task.title }}</p>
+        </div>
+        <div>
+            <textarea v-if="isEditing" v-model="editedTask.description" placeholder="Описание"></textarea>
+            <p v-else>{{ task.description }}</p>
+        </div>
+        <div>
+            <input v-if="isEditing" type="date" v-model="editedTask.deadline">
+            <p v-else>Дэдлайн: {{ task.deadline }}</p>
+        </div>
+        <p>Создано: {{ task.createdAt }}</p>
+        <p>Изменено: {{ task.lastEdited }}</p>
+        <p v-if="task.returnReason">Причина возврата: {{ task.returnReason }}</p>
+        <p v-if="colIndex === columnsLength - 1">
+            {{ taskStatus === 'completed' ? 'Выполнено в срок' : 'Просрочено' }}
+        </p>
+        <button v-if="colIndex < columnsLength - 1" @click="isEditing ? saveEdit() : toggleEdit()">{{ isEditing ? 'Сохранить' : 'Редактировать' }}</button>
+        <button @click="$emit('delete-task', task, colIndex)">Удалить</button>
+        <button v-if="colIndex < columnsLength - 1" @click="$emit('move-task', task, colIndex, colIndex + 1)">Далее</button>
+        <div v-if="colIndex === 2">
+            <textarea v-model="returnReason" placeholder="Причина возврата"></textarea>
+            <button @click="returnTask">Вернуть</button>
+        </div>
+    </div>
+    `
 });
 
 Vue.component('task-column', {
@@ -93,6 +143,8 @@ new Vue({
         <div class="task-form">
             <input v-model="newTask.title" placeholder="Название">
             <input v-model="newTask.description" placeholder="Описание">
+            <input type="date" v-model="newTask.deadline">
+            <button @click="addTask">Добавить задачу</button>
         </div>
         <div class="board">
             <task-column v-for="(column, index) in columns" 
