@@ -148,3 +148,20 @@ button:nth-of-type(3) {
 button:nth-of-type(3):hover {
     background: #3700b3;
 }
+
+.search-form {
+    padding: 10px;
+    border: 2px solid #6200ea;
+    border-radius: 5px;
+    font-size: 16px;
+    width: 100%;
+    max-width: 300px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.search-form:focus {
+    border-color: #3700b3;
+    box-shadow: 0 0 8px rgba(98, 0, 234, 0.5);
+    outline: none;
+}
+

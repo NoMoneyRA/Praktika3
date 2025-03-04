@@ -45,16 +45,13 @@ Vue.component('task-card', {
     template: `
     <div class="task" :class="taskStatus">
         <div>
-            <input v-if="isEditing" v-model="editedTask.title" placeholder="Название">
-            <p v-else>{{ task.title }}</p>
+            <p>{{ task.title }}</p>
         </div>
         <div>
-            <textarea v-if="isEditing" v-model="editedTask.description" placeholder="Описание"></textarea>
-            <p v-else>{{ task.description }}</p>
+            <p>{{ task.description }}</p>
         </div>
         <div>
-            <input v-if="isEditing" type="date" v-model="editedTask.deadline">
-            <p v-else>Дэдлайн: {{ task.deadline }}</p>
+            <p>Дэдлайн: {{ task.deadline }}</p>
         </div>
         <p>Создано: {{ task.createdAt }}</p>
         <p>Изменено: {{ task.lastEdited }}</p>
@@ -62,7 +59,6 @@ Vue.component('task-card', {
         <p v-if="colIndex === columnsLength - 1">
             {{ taskStatus === 'completed' ? 'Выполнено в срок' : 'Просрочено' }}
         </p>
-        <button v-if="colIndex < columnsLength - 1" @click="isEditing ? saveEdit() : toggleEdit()">{{ isEditing ? 'Сохранить' : 'Редактировать' }}</button>
         <button @click="$emit('delete-task', task, colIndex)">Удалить</button>
         <button v-if="colIndex < columnsLength - 1" @click="$emit('move-task', task, colIndex, colIndex + 1)">Далее</button>
         <div v-if="colIndex === 2">
@@ -74,7 +70,12 @@ Vue.component('task-card', {
 });
 
 Vue.component('task-column', {
-    props: ['column', 'index', 'columnsLength'],
+    props: ['column', 'index', 'columnsLength', 'searchQuery'],
+    computed: {
+        filteredTasks() {
+            return this.column.tasks.filter(task => task.title.toLowerCase().includes(this.searchQuery.toLowerCase()));
+        }
+    },
     methods: {
         returnTask(task, colIndex, reason) {
             this.$emit('move-task', task, colIndex, 1);
@@ -85,7 +86,7 @@ Vue.component('task-column', {
     template: `
     <div class="column">
         <h3>{{ column.title }}</h3>
-        <task-card v-for="task in column.tasks" 
+        <task-card v-for="task in filteredTasks" 
                    :key="task.createdAt" 
                    :task="task" 
                    :colIndex="index" 
@@ -109,7 +110,8 @@ new Vue({
                 { title: 'Тестирование', tasks: [] },
                 { title: 'Выполненные задачи', tasks: [] }
             ],
-            newTask: { title: '', description: '', deadline: '' }
+            newTask: { title: '', description: '', deadline: '' },
+            searchQuery: ''
         };
     },
     methods: {
@@ -140,6 +142,7 @@ new Vue({
     },
     template: `
     <div>
+        <input v-model="searchQuery" class="search-form" placeholder="Поиск по названию">
         <div class="task-form">
             <input v-model="newTask.title" placeholder="Название">
             <input v-model="newTask.description" placeholder="Описание">
@@ -152,6 +155,7 @@ new Vue({
                          :column="column" 
                          :index="index" 
                          :columnsLength="columns.length"
+                         :searchQuery="searchQuery"
                          @delete-task="deleteTask" 
                          @move-task="moveTask"
                          @update-storage="saveToLocalStorage">
